@@ -33,7 +33,6 @@
     cd ..
 3. **Execute o backend:**
     ```bash
-    Copiar código
     npm run server
 4. **Execute o frontend:**
     ```bash
@@ -41,7 +40,6 @@
     npm start
 5. **Empacotar como aplicativo de desktop:**
     ```bash
-    Copiar código
     npm run build
     npm run electron
 
