@@ -57,9 +57,10 @@ Para transformar o sistema em um aplicativo instalável:
     - O instalador gerado pode ser distribuído via GitHub Releases ou outras plataformas de distribuição.
 
 ## Transformando em Executável
-**Execute os testes unitários e funcionais para garantir que tudo esteja funcionando corretamente:**
-    ```bash
-    npm run test
+
+Execute os testes unitários e funcionais para garantir que tudo esteja funcionando corretamente:
+   ```bash
+   npm run test
 
 ## Licença
 Este projeto está licenciado sob a MIT License.
