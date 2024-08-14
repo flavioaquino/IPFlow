@@ -1,8 +1,8 @@
-# IPControl
+# IPFlow
 
 ## Descrição
 
-**IPControl** é um sistema de controle de IPs desenvolvido para provedores de internet. O software permite o gerenciamento eficiente de endereços IP, oferecendo funcionalidades como alocação automática, monitoramento em tempo real e geração de relatórios. O sistema é construído com tecnologias web modernas e pode ser transformado em um aplicativo de desktop instalável.
+**IPFlow** é um sistema de controle de IPs desenvolvido para provedores de internet. O software permite o gerenciamento eficiente de endereços IP, oferecendo funcionalidades como alocação automática, monitoramento em tempo real e geração de relatórios. O sistema é construído com tecnologias web modernas e pode ser transformado em um aplicativo de desktop instalável.
 
 ## Funcionalidades Principais
 
@@ -23,8 +23,8 @@
 
 1. **Clone o repositório:**
    ```bash
-   git clone https://github.com/seu-usuario/ipcontrol.git
-   cd ipcontrol
+   git clone https://github.com/seu-usuario/ipflow.git
+   cd ipflow
 2. **Instale as dependências:**
     ```bash
     npm install
@@ -33,7 +33,6 @@
     cd ..
 3. **Execute o backend:**
     ```bash
-    Copiar código
     npm run server
 4. **Execute o frontend:**
     ```bash
@@ -41,7 +40,6 @@
     npm start
 5. **Empacotar como aplicativo de desktop:**
     ```bash
-    Copiar código
     npm run build
     npm run electron
 
@@ -56,11 +54,11 @@ Para transformar o sistema em um aplicativo instalável:
 3. **Distribuição:**
     - O instalador gerado pode ser distribuído via GitHub Releases ou outras plataformas de distribuição.
 
-## Transformando em Executável
+## Testes
 
 Execute os testes unitários e funcionais para garantir que tudo esteja funcionando corretamente:
    ```bash
    npm run test
-
+   ```
 ## Licença
-Este projeto está licenciado sob a MIT License.
+Este projeto está licenciado sob a [MIT License](LICENSE).
