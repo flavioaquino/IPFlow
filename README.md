@@ -1,5 +1,7 @@
 # IPFlow
 
+![image](https://github.com/user-attachments/assets/ca63b8e2-6454-45e6-bfed-86f2dc447914)
+
 ## Descrição
 
 **IPFlow** é um sistema de controle de IPs desenvolvido para provedores de internet. O software permite o gerenciamento eficiente de endereços IP, oferecendo funcionalidades como alocação automática, monitoramento em tempo real e geração de relatórios. O sistema é construído com tecnologias web modernas e pode ser transformado em um aplicativo de desktop instalável.
