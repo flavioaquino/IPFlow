@@ -1,0 +1,95 @@
+body {
+    font-family: Arial, sans-serif;
+    margin: 0;
+    padding: 0;
+    background-color: #121212;
+    color: #ffffff;
+}
+
+.dashboard {
+    padding: 20px;
+}
+
+.toolbar {
+    display: flex;
+    justify-content: space-between;
+    align-items: center; /* Alinha todos os itens verticalmente no centro */
+    padding: 15px 20px;
+    background-color: #272727;
+    position: fixed;
+    top: 0;
+    left: 0;
+    right: 0;
+    z-index: 1000;
+    box-shadow: 0 2px 10px rgba(0, 0, 0, 0.5);
+}
+
+.toolbar img {
+    height: auto; /* Diminui um pouco a altura do logo */
+    width: auto; /* Mantém a proporção do logo */
+    margin: 0 auto; /* Centraliza horizontalmente */
+    display: block; /* Garante que a imagem seja um bloco centrado */
+}
+
+.toolbar button {
+    flex: 1; /* Faz os botões ocuparem a mesma largura */
+    background-color: #272727;
+    font-weight: bolder;
+    color: #ffffff;
+    border: none;
+    padding: 10px 20px;
+    cursor: pointer;
+    font-size: 16px;
+    border-radius: 14px;
+    margin: 0 20%; /* Centraliza o texto dentro dos botões */
+    text-align: center; /* Centraliza o texto dentro dos botões */
+}
+
+.toolbar button:hover {
+    background-color: #444;
+}
+
+.ip-grid {
+    display: flex;
+    flex-wrap: wrap;
+    justify-content: center; /* Centraliza os itens na linha */
+    gap: 30px; /* Espaço entre os IP-cards */
+    margin-top: 80px;
+}
+
+.ip-card {
+    background-color: #222;
+    border: 5px solid #444;
+    border-radius: 15px;
+    padding: 20px;
+    text-align: center;
+    box-shadow: 0 2px 10px rgba(0, 0, 0, 0.5);
+    flex: 1 1 calc(33% - 40px); /* Controla a largura dos cartões */
+    max-width: 180px; /* Define o tamanho máximo do cartão */
+}
+
+.ip-card:hover {
+    transform: scale(1.05);
+    transition: transform 0.3s;
+}
+
+.ip-card:not(:hover) {
+    transform: scale(1);
+    transition: transform 0.3s;
+}
+
+.ip-card.online {
+    border-color: #00BF63;
+}
+
+.ip-card.offline {
+    border-color: #FF3131;
+}
+
+.ip-card p {
+    margin: 10px 0;
+}
+
+.ip-card p:last-child {
+    font-weight: bold;
+}
