@@ -18,7 +18,7 @@
 
 - **Frontend**: [React](https://reactjs.org/) - Interface do usuário interativa e responsiva.
 - **Backend**: [Node.js](https://nodejs.org/) com [Express](https://expressjs.com/) - API que gerencia as operações de controle de IPs.
-- **Banco de Dados**: [MongoDB](https://www.mongodb.com/) - Banco de dados não-relacional para armazenar informações dos IPs.
+- **Banco de Dados**: [SQLite](https://www.sqlite.org) - Banco de dados para armazenar informações dos IPs.
 - **Desktop Wrapper**: [Electron](https://www.electronjs.org/) - Empacota a aplicação web em um aplicativo de desktop multiplataforma.
 
 ## Como Executar Localmente
