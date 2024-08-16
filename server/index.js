@@ -1,14 +1,21 @@
 const express = require('express');
 const sqlite3 = require('sqlite3').verbose();
 const cors = require('cors');
+const fs = require('fs');
 
 const app = express();
 const port = process.env.PORT || 5000;
 
+const dbPath = './database.db';
+
+if (!fs.existsSync(dbPath)) {
+    console.log('Banco de dados não encontrado. Inicializando...');
+    require('./initDatabase');
+}
+
 app.use(cors());
 app.use(express.json());
 
-// Conectando ao banco de dados SQLite
 const db = new sqlite3.Database('./database.db', (err) => {
     if (err) {
         console.error('Erro ao conectar ao banco de dados SQLite3:', err.message);
@@ -25,8 +32,7 @@ app.listen(port, () => {
     console.log(`Server is running on port: ${port}`);
 });
 
-app.get('/api/ips', (req, res) => {
-    // Buscando os IPs armazenados no SQLite3
+app.get('/ips', (req, res) => {
     db.all('SELECT * FROM ips', [], (err, rows) => {
         if (err) {
             res.status(500).json({ error: err.message });
@@ -36,14 +42,19 @@ app.get('/api/ips', (req, res) => {
     });
 });
 
-app.post('/api/ips', (req, res) => {
+app.post('/ips', (req, res) => {
     const { address } = req.body;
+    const { name } = req.body;
+    const { description } = req.body;
+
     if (!address) {
         return res.status(400).json({ error: 'Endereço IP é obrigatório' });
+    } else if (!name) {
+        return res.status(400).json({ error: 'Nome é obrigatório' });
     }
 
-    const sql = 'INSERT INTO ips (address) VALUES (?)';
-    const params = [address];
+    const sql = 'INSERT INTO ips (name, address, description) VALUES (?, ?, ?)';
+    const params = [name, address, description];
 
     db.run(sql, params, function(err) {
         if (err) {
