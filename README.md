@@ -1,5 +1,7 @@
 # IPFlow
 
+![image](https://github.com/user-attachments/assets/ca63b8e2-6454-45e6-bfed-86f2dc447914)
+
 ## Descrição
 
 **IPFlow** é um sistema de controle de IPs desenvolvido para provedores de internet. O software permite o gerenciamento eficiente de endereços IP, oferecendo funcionalidades como alocação automática, monitoramento em tempo real e geração de relatórios. O sistema é construído com tecnologias web modernas e pode ser transformado em um aplicativo de desktop instalável.
@@ -16,7 +18,7 @@
 
 - **Frontend**: [React](https://reactjs.org/) - Interface do usuário interativa e responsiva.
 - **Backend**: [Node.js](https://nodejs.org/) com [Express](https://expressjs.com/) - API que gerencia as operações de controle de IPs.
-- **Banco de Dados**: [MongoDB](https://www.mongodb.com/) - Banco de dados não-relacional para armazenar informações dos IPs.
+- **Banco de Dados**: [SQLite](https://www.sqlite.org) - Banco de dados para armazenar informações dos IPs.
 - **Desktop Wrapper**: [Electron](https://www.electronjs.org/) - Empacota a aplicação web em um aplicativo de desktop multiplataforma.
 
 ## Como Executar Localmente
