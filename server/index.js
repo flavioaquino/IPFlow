@@ -2,15 +2,16 @@ const express = require('express');
 const sqlite3 = require('sqlite3').verbose();
 const cors = require('cors');
 const fs = require('fs');
+const ping = require('ping');
 
 const app = express();
 const port = process.env.PORT || 5000;
 
-const dbPath = './database.db';
+let cronTime = '*/5 * * * *'; // Valor padrão
 
-if (!fs.existsSync(dbPath)) {
+if (!fs.existsSync("./database.db")) {
     console.log('Banco de dados não encontrado. Inicializando...');
-    require('./initDatabase');
+    require('./startBD/initDatabase');
 }
 
 app.use(cors());
@@ -23,6 +24,55 @@ const db = new sqlite3.Database('./database.db', (err) => {
         console.log('Conectado ao banco de dados SQLite3');
     }
 });
+
+db.get('SELECT cron_time FROM settings ORDER BY id DESC LIMIT 1', [], (err, row) => {
+    if (row && row.cron_time) {
+        cronTime = row.cron_time;
+    }
+
+    scheduleCronJob(cronTime);
+});
+
+const formatDateWithTimezone = (dateString) => {
+    const date = new Date(dateString);
+    // Supondo que o fuso horário desejado seja -3 horas (por exemplo, BRT)
+    const adjustedDate = new Date(date.getTime() - (3 * 60 * 60 * 1000));
+    return adjustedDate.toISOString().replace('T', ' ').substring(0, 19);
+};
+
+function scheduleCronJob(cronTime) {
+    const cron = require('node-cron');
+
+    cron.schedule(cronTime, () => {
+        db.all('SELECT * FROM ips', [], (err, rows) => {
+            if (err) {
+                console.error('Erro ao buscar IPs:', err.message);
+                return;
+            }
+
+            rows.forEach(row => {
+                monitorIP(row.address, (status) => {
+                    const sql = `UPDATE ips SET status = ?, last_seen = ? WHERE id = ?`;
+                    var now = new Date().toLocaleString();
+                    db.run(sql, [status, now, row.id], function(err) {
+                        if (err) {
+                            console.error(`Erro ao atualizar status do IP ${row.address}:`, err.message);
+                        } else {
+                            console.log(`IP ${row.address} está ${status}`);
+                        }
+                    });
+                });
+            });
+        });
+    });
+}
+
+function monitorIP(address, callback) {
+    ping.sys.probe(address, function(isAlive) {
+        const status = isAlive ? 'online' : 'offline';
+        callback(status);
+    });
+}
 
 app.get('/', (req, res) => {
     res.send('API is running');
@@ -38,7 +88,14 @@ app.get('/ips', (req, res) => {
             res.status(500).json({ error: err.message });
             return;
         }
-        res.json(rows);
+        const updatedRows = rows.map(row => {
+            return {
+                ...row,
+                created_at: formatDateWithTimezone(row.created_at),
+                last_seen: row.status === 'online' ? null : new Date().toLocaleString()
+            };
+        });
+        res.json(updatedRows);
     });
 });
 
@@ -54,14 +111,16 @@ app.get('/ips/:id', (req, res) => {
             res.status(404).json({ error: 'IP não encontrado' });
             return;
         }
-        res.json(row);
+        const updatedRow = {
+            ...row,
+            created_at: formatDateWithTimezone(row.created_at)
+        };
+        res.json(updatedRow);
     });
 });
 
 app.post('/ips', (req, res) => {
-    const { address } = req.body;
-    const { name } = req.body;
-    const { description } = req.body;
+    const { address, name, description } = req.body;
 
     if (!address) {
         return res.status(400).json({ error: 'Endereço IP é obrigatório' });
@@ -78,5 +137,110 @@ app.post('/ips', (req, res) => {
             return;
         }
         res.status(201).json({ id: this.lastID, address });
+    });
+});
+
+app.put('/ips/:id', (req, res) => {
+    const { id } = req.params;
+    const { name, address, description } = req.body;
+
+    if (!id) {
+        return res.status(400).json({ error: 'ID do IP é obrigatório' });
+    }
+
+    if (!name || !address) {
+        return res.status(400).json({ error: 'Nome e endereço IP são obrigatórios' });
+    }
+
+    const sql = `UPDATE ips 
+                 SET name = ?, address = ?, description = ?
+                 WHERE id = ?`;
+
+    const params = [name, address, description, id];
+
+    db.run(sql, params, function(err) {
+        if (err) {
+            res.status(500).json({ error: err.message });
+            return;
+        }
+
+        if (this.changes === 0) {
+            res.status(404).json({ error: 'IP não encontrado' });
+            return;
+        }
+
+        res.json({ message: 'IP atualizado com sucesso' });
+    });
+});
+
+app.delete('/ips/:id', (req, res) => {
+    const { id } = req.params;
+
+    if (!id) {
+        return res.status(400).json({ error: 'ID do IP é obrigatório' });
+    }
+
+    const sql = 'DELETE FROM ips WHERE id = ?';
+
+    db.run(sql, id, function(err) {
+        if (err) {
+            res.status(500).json({ error: err.message });
+            return;
+        }
+
+        if (this.changes === 0) {
+            res.status(404).json({ error: 'IP não encontrado' });
+            return;
+        }
+
+        res.json({ message: 'IP excluído com sucesso' });
+    });
+});
+
+app.post('/monitor', (req, res) => {
+    db.all('SELECT * FROM ips', [], (err, rows) => {
+        if (err) {
+            return res.status(500).json({ error: err.message });
+        }
+
+        rows.forEach(row => {
+            monitorIP(row.address, (status) => {
+                const sql = `UPDATE ips SET status = ? WHERE id = ?`;
+                db.run(sql, [status, row.id], function(err) {
+                    if (err) {
+                        console.error(`Erro ao atualizar status do IP ${row.address}:`, err.message);
+                    } else {
+                        console.log(`IP ${row.address} está ${status}`);
+                    }
+                });
+            });
+        });
+
+        res.json({ message: 'Monitoramento iniciado' });
+    });
+});
+
+app.post('/settings', (req, res) => {
+    const { cron_time } = req.body;
+
+    if (!cron_time) {
+        return res.status(400).json({ error: 'O tempo do cron é obrigatório' });
+    }
+
+    const sql = `INSERT INTO settings (cron_time) VALUES (?)`;
+    db.run(sql, [cron_time], function(err) {
+        if (err) {
+            return res.status(500).json({ error: err.message });
+        }
+        res.status(201).json({ id: this.lastID, cron_time });
+    });
+});
+
+app.get('/settings', (req, res) => {
+    db.get('SELECT cron_time FROM settings ORDER BY id DESC LIMIT 1', [], (err, row) => {
+        if (err) {
+            return res.status(500).json({ error: err.message });
+        }
+        res.json(row);
     });
 });

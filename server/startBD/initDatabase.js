@@ -7,9 +7,17 @@ db.serialize(() => {
             id INTEGER PRIMARY KEY AUTOINCREMENT,
             name TEXT NOT NULL,
             address TEXT NOT NULL,
-            last_seen date,
+            last_seen datetime,
             description TEXT,
-            created_at date NOT NULL DEFAULT (date('now'))
+            status TEXT NOT NULL DEFAULT 'offline',
+            created_at date NOT NULL DEFAULT (datetime('now'))
+        )
+    `);
+
+    db.run(`
+        CREATE TABLE IF NOT EXISTS settings (
+            id INTEGER PRIMARY KEY AUTOINCREMENT,
+            cron_time TEXT NOT NULL
         )
     `);
 

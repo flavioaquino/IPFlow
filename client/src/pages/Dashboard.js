@@ -28,6 +28,10 @@ const Dashboard = () => {
 
     useEffect(() => {
         fetchIps();
+
+        // Configura a atualização automática a cada 30 segundos (ajuste conforme necessário)
+        const interval = setInterval(fetchIps, 30000);
+        return () => clearInterval(interval); // Limpa o intervalo ao desmontar o componente
     }, []);
 
     const handleIpAdd = () => {
@@ -44,20 +48,24 @@ const Dashboard = () => {
             <div className="ip-container">
                 <div className="ip-grid">
                     {ips.map(ip => (
-                        <div 
-                            key={ip.id} 
-                            className={`ip-card ${ip.online ? 'online' : 'offline'}`} 
+                        <div
+                            key={ip.id}
+                            className={`ip-card ${ip.status === 'online' ? 'online' : 'offline'}`}
                             onClick={() => toggleDetails(ip.id)}
                         >
-                            <p><strong>Nome:</strong> {ip.name}</p>
+                            <p><strong>{ip.name}</strong></p>
                             <p><strong>IP:</strong> {ip.address}</p>
-                            <p>{ip.online ? 'Online' : `Offline, visto por último: ${ip.last_seen}`}</p>
+                            {ip.status === 'online' ? (
+                                <p>Online</p>
+                            ) : (
+                                <p>Offline, visto por último: {ip.last_seen}</p>
+                            )}
                         </div>
                     ))}
                 </div>
             </div>
             {showPopup && <IPAdd closePopup={() => setShowPopup(false)} onIpAdded={handleIpAdd} />}
-            {showDetails && <IPDetails closePopup={() => setShowDetails(false)} ipId={selectedIpId} />}
+            {showDetails && <IPDetails closePopup={() => setShowDetails(false)} ipId={selectedIpId} onIpChanged={handleIpAdd} />}
         </div>
     );
 };

@@ -3,13 +3,14 @@ import './css/IPs.css';
 import axios from 'axios';
 import ConfirmationPopup from './ConfirmationPopup';
 
-function IPDetails({ closePopup, ipId }) {
+function IPDetails({ closePopup, ipId, onIpChanged }) {
     const [ipDetails, setIpDetails] = useState(null);
     const [originalIpDetails, setOriginalIpDetails] = useState(null); // Armazenar dados originais
     const [loading, setLoading] = useState(true);
     const [isClosing, setIsClosing] = useState(false);
     const [hasChanges, setHasChanges] = useState(false); // Novo estado para verificar alterações
     const [showConfirm, setShowConfirm] = useState(false); // Estado para controle do popup de confirmação
+    const [showDeleteConfirm, setShowDeleteConfirm] = useState(false); // Estado para controle da confirmação de exclusão
 
     useEffect(() => {
         const fetchIpDetails = async () => {
@@ -57,6 +58,7 @@ function IPDetails({ closePopup, ipId }) {
             await axios.put(`/api/ips/${ipId}`, ipDetails);
             setOriginalIpDetails(ipDetails); // Atualizar dados originais após a atualização
             setHasChanges(false); // Resetar o estado de alterações
+            onIpChanged();
         } catch (error) {
             console.error('Erro ao atualizar IP:', error);
         }
@@ -81,6 +83,30 @@ function IPDetails({ closePopup, ipId }) {
 
     const handleCancelClose = () => {
         setShowConfirm(false);
+    };
+
+    const handleDelete = async () => {
+        try {
+            await axios.delete(`/api/ips/${ipId}`);
+            onIpChanged(); // Atualiza a lista de IPs no componente pai após a exclusão
+            closePopup(); // Fecha o popup após a exclusão
+        } catch (error) {
+            console.error('Erro ao excluir IP:', error);
+        }
+    };
+
+    const handleDeleteClick = () => {
+        setShowDeleteConfirm(true);
+    };
+
+    const handleCancelDelete = () => {
+        setShowDeleteConfirm(false);
+    };
+
+    const formatDate = (dateString) => {
+        const dateHora = new Date(dateString);
+        dateHora.setHours(dateHora.getHours() - 3); // Subtrai 3 horas
+        return dateHora.toLocaleString();
     };
 
     if (loading) return <div></div>;
@@ -112,15 +138,24 @@ function IPDetails({ closePopup, ipId }) {
                         value={ipDetails.description}
                         onChange={handleChange}
                     />
-                    <p><strong>Última Visita:</strong> {ipDetails.last_seen ? ipDetails.last_seen : 'Nunca'}</p>
-                    <p><strong>Criado em:</strong> {ipDetails.created_at}</p>
+                    <p><strong>Última atualização:</strong> {ipDetails.last_seen ? ipDetails.last_seen : 'Nunca'}</p>
+                    <p><strong>Criado em:</strong> {formatDate(ipDetails.created_at)}</p>
                     {hasChanges && (
                         <button onClick={handleUpdate} type="submit">Atualizar IP</button>
                     )}
+                    <p> </p>
+                    <button className="delete-btn" type="submit" onClick={handleDeleteClick}>Excluir IP</button>
                 </div>
             </div>
             {showConfirm && (
                 <ConfirmationPopup onConfirm={handleConfirmClose} onCancel={handleCancelClose} />
+            )}
+            {showDeleteConfirm && (
+                <ConfirmationPopup 
+                    message="Deseja mesmo excluir este IP?"
+                    onConfirm={handleDelete} 
+                    onCancel={handleCancelDelete} 
+                />
             )}
         </>
     );

@@ -1,0 +1,11 @@
+{
+    "sqltools.connections": [
+        {
+            "previewLimit": 50,
+            "driver": "SQLite",
+            "name": "IPFlow",
+            "database": "${workspaceFolder:IPFlow}/server/database.db"
+        }
+    ],
+    "sqltools.useNodeRuntime": true
+}

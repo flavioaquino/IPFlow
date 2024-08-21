@@ -106,7 +106,6 @@ button[type="submit"]:hover {
     }
 }
 
-/* Aplicação das animações no estado ativo e ao fechar */
 .popup-overlay.active .popup-content {
     animation-name: slideInUp;
 }
@@ -115,7 +114,6 @@ button[type="submit"]:hover {
     animation-name: slideOutDown;
 }
 
-/* Popup de confirmação */
 .confirmation-overlay {
     backdrop-filter: blur(2px);
     position: fixed;
