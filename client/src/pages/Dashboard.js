@@ -3,12 +3,38 @@ import './Dashboard.css';
 import logo from '../assets/logo.png';
 import IPAdd from '../components/IPAdd';
 import IPDetails from '../components/IPDetails';
+import Sidebar from '../components/Sidebar';
+import SettingsPopup from '../components/SettingsPopup.js';
 
 const Dashboard = () => {
     const [ips, setIps] = useState([]);
     const [showPopup, setShowPopup] = useState(false);
     const [showDetails, setShowDetails] = useState(false);
     const [selectedIpId, setSelectedIpId] = useState(null);
+    const [isSidebarOpen, setSidebarOpen] = useState(false);
+    const [isClosing, setIsClosing] = useState(false);
+    const [isSettingsOpen, setSettingsOpen] = useState(false);
+    
+    const toggleSidebar = () => {
+        if (isSidebarOpen) {
+            setIsClosing(true);
+            setTimeout(() => {
+                setSidebarOpen(false);
+                setIsClosing(false);
+            }, 300); // Tempo de animação de saída
+        } else {
+            setSidebarOpen(true);
+        }
+    };
+
+    const showSettings = () => {
+        setSettingsOpen(true);
+        //toggleSidebar(); // Fecha a sidebar ao abrir o popup de configurações
+    };
+
+    const closeSettings = () => {
+        setSettingsOpen(false);
+    };
 
     const togglePopup = () => {
         setShowPopup(!showPopup);
@@ -41,10 +67,13 @@ const Dashboard = () => {
     return (
         <div className="dashboard">
             <div className="toolbar">
-                <button onClick={togglePopup}>Inserir IP</button>
-                <img src={logo} onClick={fetchIps} style={{ cursor: "pointer", width: '60px' }} alt="Logo" />
-                <button>Realizar Teste</button>
+                <button onClick={toggleSidebar} className="menu-button">☰</button>
+                <img src={logo} onClick={fetchIps} alt="Logo" />
+                <div className="toolbar-buttons">
+                    <button onClick={togglePopup} className='toolbar-button'>Inserir IP</button>
+                </div>
             </div>
+            {isSidebarOpen && <Sidebar closeSidebar={toggleSidebar} showSettings={showSettings} isClosing={isClosing} />}
             <div className="ip-container">
                 <div className="ip-grid">
                     {ips.map(ip => (
@@ -66,6 +95,7 @@ const Dashboard = () => {
             </div>
             {showPopup && <IPAdd closePopup={() => setShowPopup(false)} onIpAdded={handleIpAdd} />}
             {showDetails && <IPDetails closePopup={() => setShowDetails(false)} ipId={selectedIpId} onIpChanged={handleIpAdd} />}
+            {isSettingsOpen && <SettingsPopup closePopup={closeSettings} />}
         </div>
     );
 };
