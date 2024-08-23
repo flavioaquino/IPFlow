@@ -54,16 +54,16 @@ const Dashboard = () => {
 
     useEffect(() => {
         fetchIps();
-
-        // Configura a atualização automática a cada 30 segundos (ajuste conforme necessário)
-        const interval = setInterval(fetchIps, 30000);
-        return () => clearInterval(interval); // Limpa o intervalo ao desmontar o componente
+        
+        // Configura a atualização automática a cada 10 segundos (ajuste conforme necessário)
+        const interval = setInterval(fetchIps, 10000);
+        return () => clearInterval(interval);
     }, []);
 
     const handleIpAdd = () => {
         fetchIps();
     };
-
+    
     return (
         <div className="dashboard">
             <div className="toolbar">
@@ -87,7 +87,7 @@ const Dashboard = () => {
                             {ip.status === 'online' ? (
                                 <p>Online</p>
                             ) : (
-                                <p>Offline, visto por último: {ip.last_seen}</p>
+                                <p>Offline, visto por último: {ip.last_seen ? ip.last_seen : 'Nunca'}</p>
                             )}
                         </div>
                     ))}

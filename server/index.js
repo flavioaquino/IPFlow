@@ -7,7 +7,7 @@ const ping = require('ping');
 const app = express();
 const port = process.env.PORT || 5000;
 
-let cronTime = '*/5 * * * *'; // Valor padrão
+let cronTime = '*/1 * * * *'; // Valor padrão
 
 if (!fs.existsSync("./database.db")) {
     console.log('Banco de dados não encontrado. Inicializando...');
@@ -29,7 +29,6 @@ db.get('SELECT cron_time FROM settings ORDER BY id DESC LIMIT 1', [], (err, row)
     if (row && row.cron_time) {
         cronTime = row.cron_time;
     }
-
     scheduleCronJob(cronTime);
 });
 
@@ -49,12 +48,11 @@ function scheduleCronJob(cronTime) {
                 console.error('Erro ao buscar IPs:', err.message);
                 return;
             }
-
             rows.forEach(row => {
-                monitorIP(row.address, (status) => {
-                    const sql = `UPDATE ips SET status = ?, last_seen = ? WHERE id = ?`;
+                monitorIP(row.address, (status, isAlive) => {
+                    const sql = `UPDATE ips SET status = ?, ${isAlive ? 'last_seen = ?' : 'last_seen = last_seen'} WHERE id = ?`;
                     var now = new Date().toLocaleString();
-                    db.run(sql, [status, now, row.id], function(err) {
+                    db.run(sql, [status, ...(isAlive ? [now] : []), row.id], function(err) {
                         if (err) {
                             console.error(`Erro ao atualizar status do IP ${row.address}:`, err.message);
                         } else {
@@ -70,7 +68,21 @@ function scheduleCronJob(cronTime) {
 function monitorIP(address, callback) {
     ping.sys.probe(address, function(isAlive) {
         const status = isAlive ? 'online' : 'offline';
-        callback(status);
+        callback(status, isAlive);
+    });
+}
+
+function checkIP(id, address) {
+    monitorIP(address, (status, isAlive) => {
+        const sql = `UPDATE ips SET status = ?, ${isAlive ? 'last_seen = ?' : 'last_seen = last_seen'} WHERE id = ?`;
+        var now = new Date().toLocaleString();
+        db.run(sql, [status, ...(isAlive ? [now] : []), id], function(err) {
+            if (err) {
+                console.error(`Erro ao atualizar status do IP ${address}:`, err.message);
+            } else {
+                console.log(`IP ${address} está ${status}`);
+            }
+        });
     });
 }
 
@@ -92,7 +104,7 @@ app.get('/ips', (req, res) => {
             return {
                 ...row,
                 created_at: formatDateWithTimezone(row.created_at),
-                last_seen: row.status === 'online' ? null : new Date().toLocaleString()
+                last_seen: row.status === 'online' ? null : row.last_seen
             };
         });
         res.json(updatedRows);
@@ -136,7 +148,11 @@ app.post('/ips', (req, res) => {
             res.status(500).json({ error: err.message });
             return;
         }
-        res.status(201).json({ id: this.lastID, address });
+        const newIPId = this.lastID;
+        res.status(201).json({ id: newIPId, address });
+
+        // Verifique o IP imediatamente após a inserção
+        checkIP(newIPId, address);
     });
 });
 
@@ -204,7 +220,7 @@ app.post('/monitor', (req, res) => {
         }
 
         rows.forEach(row => {
-            monitorIP(row.address, (status) => {
+            monitorIP(row.address, (status, isAlive) => {
                 const sql = `UPDATE ips SET status = ? WHERE id = ?`;
                 db.run(sql, [status, row.id], function(err) {
                     if (err) {

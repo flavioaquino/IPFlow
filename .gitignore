@@ -1,4 +1,5 @@
 server/node_modules/
-client/node_modules/
+server/database.db
 server/testip.js
+client/node_modules/
 .vscode/

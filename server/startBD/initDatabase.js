@@ -21,6 +21,14 @@ db.serialize(() => {
         )
     `);
 
+    db.run(`
+        CREATE TABLE IF NOT EXISTS alert_settings (
+            id INTEGER PRIMARY KEY AUTOINCREMENT,
+            whatsapp_number TEXT,
+            telegram_number TEXT
+        );
+    `);
+
     console.log('Banco de dados SQLite inicializado com sucesso!');
 });
 
