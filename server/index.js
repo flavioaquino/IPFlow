@@ -3,6 +3,7 @@ const sqlite3 = require('sqlite3').verbose();
 const cors = require('cors');
 const fs = require('fs');
 const ping = require('ping');
+const sendTelegramMessage = require('./telegramNotifier');
 
 const app = express();
 const port = process.env.PORT || 5000;
@@ -66,9 +67,31 @@ function scheduleCronJob(cronTime) {
 }
 
 function monitorIP(address, callback) {
-    ping.sys.probe(address, function(isAlive) {
-        const status = isAlive ? 'online' : 'offline';
-        callback(status, isAlive);
+    db.get('SELECT status FROM ips WHERE address = ?', [address], (err, row) => {
+        if (err) {
+            console.error('Erro ao buscar status do IP:', err.message);
+            return;
+        }
+
+        ping.sys.probe(address, function(isAlive) {
+            const status = isAlive ? 'online' : 'offline';
+
+            // Verifica se o status mudou de online para offline
+            if (row && row.status === 'online' && status === 'offline') {
+                // Dispara alerta por Telegram
+                db.all('SELECT telegram_number FROM alert_settings', [], (err, rows) => {
+                    if (err) {
+                        console.error('Erro ao buscar configurações de alerta:', err.message);
+                        return;
+                    }
+                    rows.forEach(alertRow => {
+                        sendTelegramMessage(alertRow.telegram_number, `A câmera com IP ${address} ficou offline.`);
+                    });
+                });
+            }
+
+            callback(status, isAlive);
+        });
     });
 }
 
