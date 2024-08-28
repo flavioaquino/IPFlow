@@ -26,7 +26,7 @@ db.serialize(() => {
             id INTEGER PRIMARY KEY AUTOINCREMENT,
             name TEXT,
             type integer,
-            userID varchar(255)
+            user_key varchar(255)
         );
     `);
 

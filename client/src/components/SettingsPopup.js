@@ -1,11 +1,8 @@
 import React, { useEffect, useState, useCallback } from 'react';
 import './css/Settings.css';
-import axios from 'axios';
 import TelegramSettingsPopup from './TelegramSettingsPopup';
 
 function SettingsPopup({ closePopup }) {
-    const [whatsappNumber, setWhatsappNumber] = useState('');
-    const [telegramNumber, setTelegramNumber] = useState('');
     const [showTelegramSettings, setShowTelegramSettings] = useState(false);
 
     useEffect(() => {
@@ -50,19 +47,6 @@ function SettingsPopup({ closePopup }) {
             document.removeEventListener('mousedown', handleOutsideClick);
         };
     }, [handleClose]);
-
-    const handleSubmit = async (e) => {
-        e.preventDefault();
-        try {
-            await axios.post('/api/settings', {
-                whatsappNumber,
-                telegramNumber
-            });
-            handleClose();
-        } catch (error) {
-            console.error('Erro ao salvar as configurações:', error);
-        }
-    };
 
     return (
         <div className="popup-overlay">
