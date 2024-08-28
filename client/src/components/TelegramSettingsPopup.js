@@ -8,7 +8,7 @@ function TelegramSettingsPopup({ closePopup }) {
     const [chatID, setChatID] = useState('');
 
     useEffect(() => {
-        const popupOverlay = document.querySelector('.popup-overlay');
+        const popupOverlay = document.querySelector('.telegram-popup-overlay');
         popupOverlay.classList.add('active');
 
         return () => {
@@ -17,7 +17,7 @@ function TelegramSettingsPopup({ closePopup }) {
     }, []);
 
     const handleClose = useCallback(() => {
-        const popupOverlay = document.querySelector('.popup-overlay');
+        const popupOverlay = document.querySelector('.telegram-popup-overlay');
         popupOverlay.classList.add('closing');
 
         setTimeout(() => {
@@ -39,7 +39,7 @@ function TelegramSettingsPopup({ closePopup }) {
         fetchPeople();
 
         const handleOutsideClick = (event) => {
-            if (event.target.classList.contains('popup-overlay')) {
+            if (event.target.classList.contains('telegram-popup-overlay')) {
                 handleClose();
             }
         };
@@ -63,21 +63,31 @@ function TelegramSettingsPopup({ closePopup }) {
         }
     };
 
+    const handleDeletePerson = async (id) => {
+        try {
+            await axios.delete(`/api/telegram-people/${id}`);
+            setPeople(people.filter(person => person.id !== id));
+        } catch (error) {
+            console.error('Erro ao excluir pessoa:', error);
+        }
+    };
+
     return (
-        <div className="popup-overlay">
-            <div className="popup-content">
-                <button className="close-btn" onClick={handleClose}>×</button>
+        <div className="telegram-popup-overlay">
+            <div className="telegram-popup-content">
+                <button className="telegram-close-btn" onClick={handleClose}>×</button>
                 <h2>Configurações do Telegram</h2>
 
-                <div className="people-list">
+                <div className="telegram-people-list">
                     {people.map(person => (
-                        <div key={person.id} className="person-item">
-                            <p>{person.name} - {person.chatID}</p>
+                        <div key={person.id} className="telegram-person-item">
+                            <p>{person.name} - {person.user_key}</p>
+                            <button onClick={() => handleDeletePerson(person.id)}>Excluir</button>
                         </div>
                     ))}
                 </div>
 
-                <div className="add-person">
+                <div className="telegram-add-person">
                     <input
                         type="text"
                         placeholder="Nome"

@@ -28,9 +28,9 @@
     border-radius: 20px;
     text-align: center;
     position: relative;
-    min-width: 200px;
-    width: 30%;
-    max-width: 300px;
+    min-width: 400px;
+    width: 50%;
+    max-width: 400px;
     animation-duration: 0.4s;
     animation-fill-mode: both;
 }
@@ -121,5 +121,5 @@ button[type="submit"]:hover {
     cursor: pointer;
     margin-bottom: 20px;
     height: 45px;
-    width: 40%;
+    width: 60%;
 }

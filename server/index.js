@@ -66,7 +66,7 @@ function scheduleCronJob(cronTime) {
 }
 
 function monitorIP(address, callback) {
-    db.get('SELECT status FROM ips WHERE address = ?', [address], (err, row) => {
+    db.get('SELECT status, name FROM ips WHERE address = ?', [address], (err, row) => {
         if (err) {
             console.error('Erro ao buscar status do IP:', err.message);
             return;
@@ -76,13 +76,13 @@ function monitorIP(address, callback) {
             const status = isAlive ? 'online' : 'offline';
 
             if (row && row.status === 'online' && status === 'offline') {
-                db.all('SELECT telegram_number FROM alert_settings', [], (err, rows) => {
+                db.all('SELECT user_key FROM alert_settings WHERE type = 1', [], (err, rows) => {
                     if (err) {
                         console.error('Erro ao buscar configurações de alerta:', err.message);
                         return;
                     }
                     rows.forEach(alertRow => {
-                        sendTelegramMessage(alertRow.telegram_number, `A câmera com IP ${address} ficou offline.`);
+                        sendTelegramMessage(alertRow.user_key, `A câmera ${row.name} (IP ${address}) ficou offline.`);
                     });
                 });
             }
@@ -278,5 +278,57 @@ app.get('/settings', (req, res) => {
             return res.status(500).json({ error: err.message });
         }
         res.json(row);
+    });
+});
+
+// Rota para listar todas as pessoas
+app.get('/telegram-people', (req, res) => {
+    db.all('SELECT * FROM alert_settings', [], (err, rows) => {
+        if (err) {
+            return res.status(500).json({ error: err.message });
+        }
+        res.json(rows);
+    });
+});
+
+// Rota para adicionar uma nova pessoa
+app.post('/telegram-people', (req, res) => {
+    const { name, chatID } = req.body;
+
+    if (!name || !chatID) {
+        return res.status(400).json({ error: 'Nome e Chat ID são obrigatórios' });
+    }
+
+    const sql = 'INSERT INTO alert_settings (name, type, user_key) VALUES (?, ?, ?)';
+    const params = [name, 1, chatID];
+
+    db.run(sql, params, function(err) {
+        if (err) {
+            return res.status(500).json({ error: err.message });
+        }
+        res.status(201).json({ id: this.lastID, name, chatID });
+    });
+});
+
+// Rota para excluir uma pessoa
+app.delete('/telegram-people/:id', (req, res) => {
+    const { id } = req.params;
+
+    if (!id) {
+        return res.status(400).json({ error: 'ID é obrigatório' });
+    }
+
+    const sql = 'DELETE FROM alert_settings WHERE id = ?';
+
+    db.run(sql, id, function(err) {
+        if (err) {
+            return res.status(500).json({ error: err.message });
+        }
+
+        if (this.changes === 0) {
+            return res.status(404).json({ error: 'Pessoa não encontrada' });
+        }
+
+        res.json({ message: 'Pessoa excluída com sucesso' });
     });
 });
