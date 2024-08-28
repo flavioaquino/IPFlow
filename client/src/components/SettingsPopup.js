@@ -1,10 +1,12 @@
 import React, { useEffect, useState, useCallback } from 'react';
-import './css/Settings.css'; // Supondo que o arquivo CSS seja diferente
+import './css/Settings.css';
 import axios from 'axios';
+import TelegramSettingsPopup from './TelegramSettingsPopup';
 
-function SettingsPopup({ closePopup }) {  // Ajuste o nome da prop para closePopup
+function SettingsPopup({ closePopup }) {
     const [whatsappNumber, setWhatsappNumber] = useState('');
     const [telegramNumber, setTelegramNumber] = useState('');
+    const [showTelegramSettings, setShowTelegramSettings] = useState(false);
 
     useEffect(() => {
         const popupOverlay = document.querySelector('.popup-overlay');
@@ -15,12 +17,22 @@ function SettingsPopup({ closePopup }) {  // Ajuste o nome da prop para closePop
         };
     }, []);
 
+    const handleOpenTelegramSettings = () => {
+        const popupOverlay = document.querySelector('.popup-overlay');
+        popupOverlay.classList.add('closing');
+        
+        setTimeout(() => {
+            setShowTelegramSettings(true);
+            popupOverlay.classList.remove('closing');
+        }, 400); // 400ms para sincronizar com a animação de fechamento
+    };
+
     const handleClose = useCallback(() => {
         const popupOverlay = document.querySelector('.popup-overlay');
         popupOverlay.classList.add('closing');
 
         setTimeout(() => {
-            closePopup();  // Use closePopup em vez de closeSettings
+            closePopup();
             popupOverlay.classList.remove('closing');
         }, 400);
     }, [closePopup]);
@@ -55,27 +67,16 @@ function SettingsPopup({ closePopup }) {  // Ajuste o nome da prop para closePop
     return (
         <div className="popup-overlay">
             <div className="popup-content">
-                <button className="close-btn" onClick={handleClose}>×</button>
-                <h2>Configurações de Alertas</h2>
-                <form onSubmit={handleSubmit}>
-                    <input
-                        type="text"
-                        id="whatsapp"
-                        placeholder='Número do WhatsApp'
-                        name="whatsapp"
-                        value={whatsappNumber}
-                        onChange={(e) => setWhatsappNumber(e.target.value)}
-                    />
-                    <input
-                        type="text"
-                        id="telegram"
-                        placeholder='Número do Telegram'
-                        name="telegram"
-                        value={telegramNumber}
-                        onChange={(e) => setTelegramNumber(e.target.value)}
-                    />
-                    <button type="submit">Salvar</button>
-                </form>
+                {showTelegramSettings ? (
+                    <TelegramSettingsPopup closePopup={() => setShowTelegramSettings(false)} />
+                ) : (
+                    <>
+                        <button className="close-btn" onClick={handleClose}>×</button>
+                        <h2>Configurações de Alertas</h2>
+                        <button className="settings-btn" onClick={handleOpenTelegramSettings}>Configurações do Telegram</button><br></br>
+                        <button className="settings-btn">Configurações do WhatsApp</button>
+                    </>
+                )}
             </div>
         </div>
     );

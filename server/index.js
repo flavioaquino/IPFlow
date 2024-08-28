@@ -35,7 +35,6 @@ db.get('SELECT cron_time FROM settings ORDER BY id DESC LIMIT 1', [], (err, row)
 
 const formatDateWithTimezone = (dateString) => {
     const date = new Date(dateString);
-    // Supondo que o fuso horário desejado seja -3 horas (por exemplo, BRT)
     const adjustedDate = new Date(date.getTime() - (3 * 60 * 60 * 1000));
     return adjustedDate.toISOString().replace('T', ' ').substring(0, 19);
 };
@@ -76,9 +75,7 @@ function monitorIP(address, callback) {
         ping.sys.probe(address, function(isAlive) {
             const status = isAlive ? 'online' : 'offline';
 
-            // Verifica se o status mudou de online para offline
             if (row && row.status === 'online' && status === 'offline') {
-                // Dispara alerta por Telegram
                 db.all('SELECT telegram_number FROM alert_settings', [], (err, rows) => {
                     if (err) {
                         console.error('Erro ao buscar configurações de alerta:', err.message);

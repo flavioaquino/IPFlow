@@ -3,3 +3,4 @@ server/database.db
 server/testip.js
 client/node_modules/
 .vscode/
+server/.env
