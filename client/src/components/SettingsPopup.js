@@ -1,9 +1,11 @@
 import React, { useEffect, useState, useCallback } from 'react';
 import './css/Settings.css';
 import TelegramSettingsPopup from './TelegramSettingsPopup';
+import SystemSettingsPopup from './SystemSettingsPopup';
 
 function SettingsPopup({ closePopup }) {
     const [showTelegramSettings, setShowTelegramSettings] = useState(false);
+    const [showSystemSettings, setShowSystemSettings] = useState(false);
 
     useEffect(() => {
         const popupOverlay = document.querySelector('.popup-overlay');
@@ -21,7 +23,17 @@ function SettingsPopup({ closePopup }) {
         setTimeout(() => {
             setShowTelegramSettings(true);
             popupOverlay.classList.remove('closing');
-        }, 400); // 400ms para sincronizar com a animação de fechamento
+        }, 400);
+    };
+
+    const handleOpenSystemSettings = () => {
+        const popupOverlay = document.querySelector('.popup-overlay');
+        popupOverlay.classList.add('closing');
+        
+        setTimeout(() => {
+            setShowSystemSettings(true);
+            popupOverlay.classList.remove('closing');
+        }, 400);
     };
 
     const handleClose = useCallback(() => {
@@ -53,11 +65,14 @@ function SettingsPopup({ closePopup }) {
             <div className="popup-content">
                 {showTelegramSettings ? (
                     <TelegramSettingsPopup closePopup={() => setShowTelegramSettings(false)} />
+                ) : showSystemSettings ? (
+                    <SystemSettingsPopup closePopup={() => setShowSystemSettings(false)} />
                 ) : (
                     <>
                         <button className="close-btn" onClick={handleClose}>×</button>
-                        <h2>Configurações de Alertas</h2>
-                        <button className="settings-btn" onClick={handleOpenTelegramSettings}>Configurações do Telegram</button><br></br>
+                        <h2>Configurações</h2>
+                        <button className="settings-btn" onClick={handleOpenSystemSettings}>Configurações do Sistema</button>
+                        <button className="settings-btn" onClick={handleOpenTelegramSettings}>Configurações do Telegram</button>
                         <button className="settings-btn">Configurações do WhatsApp</button>
                     </>
                 )}

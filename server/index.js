@@ -4,6 +4,7 @@ const cors = require('cors');
 const fs = require('fs');
 const ping = require('ping');
 const sendTelegramMessage = require('./telegramNotifier');
+const cron = require('node-cron');
 
 const app = express();
 const port = process.env.PORT || 5000;
@@ -26,10 +27,13 @@ const db = new sqlite3.Database('./database.db', (err) => {
     }
 });
 
+// Obtém o valor de cron_time do banco de dados na inicialização
 db.get('SELECT cron_time FROM settings ORDER BY id DESC LIMIT 1', [], (err, row) => {
     if (row && row.cron_time) {
-        cronTime = row.cron_time;
-    }
+        let dbCronTime = row.cron_time;
+
+        cronTime = `*/${dbCronTime} * * * * *`;
+        }
     scheduleCronJob(cronTime);
 });
 
@@ -39,10 +43,32 @@ const formatDateWithTimezone = (dateString) => {
     return adjustedDate.toISOString().replace('T', ' ').substring(0, 19);
 };
 
-function scheduleCronJob(cronTime) {
-    const cron = require('node-cron');
+function formatCronTime(seconds) {
+    if (seconds < 1) {
+        throw new Error('O tempo deve ser de pelo menos 1 segundo.');
+    }
+    // Para segundos, utilize o formato '* * * * * *'
+    // Para minutos, utilize o formato '*/N * * * *'
+    const minutes = Math.floor(seconds / 60);
+    const remainingSeconds = seconds % 60;
 
-    cron.schedule(cronTime, () => {
+    if (seconds < 60) {
+        // Cron job com intervalo em segundos
+        return `*/${seconds} * * * * *`;
+    } else {
+        // Cron job com intervalo em minutos
+        return `*/${minutes} * * * *`;
+    }
+}
+
+var scheduledJob = null;
+
+function scheduleCronJob(cronTime) {
+    if (scheduledJob) {
+        scheduledJob.stop();
+    }
+    
+    scheduledJob = cron.schedule(cronTime, () => {
         db.all('SELECT * FROM ips', [], (err, rows) => {
             if (err) {
                 console.error('Erro ao buscar IPs:', err.message);
@@ -51,7 +77,7 @@ function scheduleCronJob(cronTime) {
             rows.forEach(row => {
                 monitorIP(row.address, (status, isAlive) => {
                     const sql = `UPDATE ips SET status = ?, ${isAlive ? 'last_seen = ?' : 'last_seen = last_seen'} WHERE id = ?`;
-                    var now = new Date().toLocaleString();
+                    const now = new Date().toLocaleString();
                     db.run(sql, [status, ...(isAlive ? [now] : []), row.id], function(err) {
                         if (err) {
                             console.error(`Erro ao atualizar status do IP ${row.address}:`, err.message);
@@ -263,13 +289,23 @@ app.post('/settings', (req, res) => {
         return res.status(400).json({ error: 'O tempo do cron é obrigatório' });
     }
 
-    const sql = `INSERT INTO settings (cron_time) VALUES (?)`;
-    db.run(sql, [cron_time], function(err) {
-        if (err) {
-            return res.status(500).json({ error: err.message });
-        }
-        res.status(201).json({ id: this.lastID, cron_time });
-    });
+    try {
+        const validCronTime = formatCronTime(parseInt(cron_time));
+
+        const sql = `INSERT INTO settings (cron_time) VALUES (?)`;
+        db.run(sql, [cron_time], function(err) {
+            if (err) {
+                return res.status(500).json({ error: err.message });
+            }
+
+            // Atualiza o cron job com o novo valor
+            scheduleCronJob(validCronTime);
+
+            res.status(201).json({ id: this.lastID, cron_time });
+        });
+    } catch (error) {
+        res.status(400).json({ error: error.message });
+    }
 });
 
 app.get('/settings', (req, res) => {
