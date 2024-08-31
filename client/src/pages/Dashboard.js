@@ -68,7 +68,7 @@ const Dashboard = () => {
         <div className="dashboard">
             <div className="toolbar">
                 <button onClick={toggleSidebar} className="menu-button">☰</button>
-                <img src={logo} onClick={fetchIps} alt="Logo" />
+                <img src={logo} onClick={() => {fetchIps()}} alt="Logo" />
                 <div className="toolbar-buttons">
                     <button onClick={togglePopup} className='toolbar-button'>Inserir IP</button>
                 </div>

@@ -30,6 +30,25 @@ db.serialize(() => {
         );
     `);
 
+    db.run(`
+        CREATE TABLE IF NOT EXISTS alerts (
+            id INTEGER PRIMARY KEY AUTOINCREMENT,
+            message TEXT,
+            user_key varchar(255),
+            created_at date NOT NULL DEFAULT (datetime('now'))
+        );
+    `);
+
+    db.run(`
+        CREATE TABLE IF NOT EXISTS ip_status_history (
+            id INTEGER PRIMARY KEY AUTOINCREMENT,
+            ip_id INTEGER,
+            status TEXT NOT NULL,
+            timestamp DATETIME DEFAULT CURRENT_TIMESTAMP,
+            FOREIGN KEY (ip_id) REFERENCES ips(id)
+        );
+    `);
+    
     console.log('Banco de dados SQLite inicializado com sucesso!');
 });
 

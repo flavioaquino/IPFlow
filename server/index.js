@@ -101,16 +101,25 @@ function monitorIP(address, callback) {
         ping.sys.probe(address, function(isAlive) {
             const status = isAlive ? 'online' : 'offline';
 
-            if (row && row.status === 'online' && status === 'offline') {
-                db.all('SELECT user_key FROM alert_settings WHERE type = 1', [], (err, rows) => {
-                    if (err) {
-                        console.error('Erro ao buscar configurações de alerta:', err.message);
-                        return;
-                    }
-                    rows.forEach(alertRow => {
-                        sendTelegramMessage(alertRow.user_key, `A câmera ${row.name} (IP ${address}) ficou offline.`);
+            if (row && row.status !== status) {
+                // Registra a mudança de status no histórico
+                const sqlHistory = `INSERT INTO ip_status_history (ip_id, status) VALUES (?, ?)`;
+                db.run(sqlHistory, [row.id, status]);
+
+                if (status === 'offline') {
+                    db.all('SELECT user_key FROM alert_settings WHERE type = 1', [], (err, rows) => {
+                        if (err) {
+                            console.error('Erro ao buscar configurações de alerta:', err.message);
+                            return;
+                        }
+                        rows.forEach(alertRow => {
+                            var message = `A câmera ${row.name} (IP ${address}) ficou offline.`;
+                            sendTelegramMessage(alertRow.user_key, message);
+                            const sqlAlert = `INSERT INTO alerts (message, user_key) VALUES (?, ?)`;
+                            db.run(sqlAlert, [message, alertRow.user_key]);
+                        });
                     });
-                });
+                }
             }
 
             callback(status, isAlive);
@@ -366,5 +375,101 @@ app.delete('/telegram-people/:id', (req, res) => {
         }
 
         res.json({ message: 'Pessoa excluída com sucesso' });
+    });
+});
+
+// Relatório de disponibilidade
+app.get('/reports/availability', (req, res) => {
+    const sql = `
+        SELECT ip_id, status, timestamp
+        FROM ip_status_history
+        WHERE timestamp >= datetime('now', '-7 days')
+        ORDER BY timestamp DESC
+    `;
+    db.all(sql, [], (err, rows) => {
+        if (err) {
+            return res.status(500).json({ error: err.message });
+        }
+        res.json(rows);
+    });
+});
+
+app.get('/reports/online-percentage', (req, res) => {
+    const sql = `
+        SELECT
+            (SELECT COUNT(*) FROM ips WHERE status = 'online') * 100.0 / COUNT(*) AS online,
+            (SELECT COUNT(*) FROM ips WHERE status = 'offline') * 100.0 / COUNT(*) AS offline
+        FROM ips
+    `;
+    db.get(sql, [], (err, row) => {
+        if (err) {
+            return res.status(500).json({ error: err.message });
+        }
+        res.json(row);
+    });
+});
+
+app.get('/report/availability-history', (req, res) => {
+    db.all(`SELECT address, name, status, last_seen FROM ips ORDER BY last_seen DESC`, [], (err, rows) => {
+        if (err) {
+            return res.status(500).json({ error: err.message });
+        }
+        res.json(rows);
+    });
+});
+
+app.get('/report/percentage', (req, res) => {
+    db.all(`SELECT status, COUNT(*) as count FROM ips GROUP BY status`, [], (err, rows) => {
+        if (err) {
+            return res.status(500).json({ error: err.message });
+        }
+        res.json(rows);
+    });
+});
+
+app.get('/report/avg-downtime', (req, res) => {
+    db.all(`SELECT address, AVG(JULIANDAY('now') - JULIANDAY(last_seen)) * 24 * 60 AS avg_downtime FROM ips WHERE status = 'offline' GROUP BY address`, [], (err, rows) => {
+        if (err) {
+            return res.status(500).json({ error: err.message });
+        }
+        res.json(rows);
+    });
+});
+
+app.get('/report/performance', (req, res) => {
+    db.all(`SELECT address, name, SUM(status = 'offline') as offline_count, SUM(status = 'online') as online_count FROM ips GROUP BY address`, [], (err, rows) => {
+        if (err) {
+            return res.status(500).json({ error: err.message });
+        }
+        res.json(rows);
+    });
+});
+
+app.get('/report/alerts', (req, res) => {
+    db.all(`SELECT * FROM alerts ORDER BY created_at DESC`, [], (err, rows) => {
+        if (err) {
+            return res.status(500).json({ error: err.message });
+        }
+        res.json(rows);
+    });
+});
+
+app.get('/report/status-by-hour', (req, res) => {
+    db.all(`SELECT strftime('%H', last_seen) as hour, status, COUNT(*) as count FROM ips GROUP BY hour, status ORDER BY hour`, [], (err, rows) => {
+        if (err) {
+            return res.status(500).json({ error: err.message });
+        }
+        res.json(rows);
+    });
+});
+
+app.get('/report/trends', (req, res) => {
+    // Implementação de tendências usando a lógica específica do sistema
+    // Exemplo simplificado:
+    db.all(`SELECT strftime('%Y-%m-%d', last_seen) as date, status, COUNT(*) as count FROM ips GROUP BY date, status ORDER BY date`, [], (err, rows) => {
+        if (err) {
+            return res.status(500).json({ error: err.message });
+        }
+        res.json(rows);
     });
 });

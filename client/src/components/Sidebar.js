@@ -25,8 +25,8 @@ function Sidebar({ closeSidebar, showSettings, isClosing }) {
         <div className={`sidebar-overlay ${isClosing ? 'closing' : ''}`} onClick={handleOutsideClick}>
             <div className={`sidebar ${isClosing ? 'closing' : ''}`}>
                 <button onClick={handleClose} className="close-sidebar">X</button>
+                <button onClick={() => window.location.href = '/reports'}>Relatórios</button>
                 <button onClick={showSettings}>Configurações</button>
-                <button onClick={() => alert('Botão adicional clicado!')}>Novo Botão</button>
             </div>
         </div>
     );
